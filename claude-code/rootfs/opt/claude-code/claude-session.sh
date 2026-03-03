@@ -26,7 +26,7 @@ while true; do
 
     if is_authenticated; then
         # Authenticated — run Claude with session persistence
-        dtach -N "$SOCKET" -r winch claude --continue
+        dtach -N "$SOCKET" -r winch bash -c 'claude --continue || claude'
         echo "Claude exited, restarting in 2s..."
         sleep 2
     else
