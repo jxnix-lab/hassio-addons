@@ -85,10 +85,28 @@ if [ ! -f "$CLAUDE_CONFIG" ]; then
     bashio::log.info "Claude config preseeded with Remote Control enabled"
 fi
 
-# --- Drop addon CLAUDE.md into .claude/ (always overwrite — addon-managed) ---
+# --- Drop addon CLAUDE.md and settings into .claude/ (always overwrite — addon-managed) ---
 mkdir -p /config/.claude
 cp /opt/claude-code/CLAUDE.md.tmpl /config/.claude/CLAUDE.md
+
+# Pre-seed project permissions — allow hass wrapper and ha CLI without prompting
+cat > /config/.claude/settings.json << 'SETTINGS'
+{
+  "permissions": {
+    "allow": [
+      "Bash(hass *)",
+      "Bash(hass)",
+      "Bash(ha *)",
+      "Bash(ha)",
+      "Bash(git *)",
+      "Bash(git)",
+      "Bash(curl * http://supervisor/*)"
+    ]
+  }
+}
+SETTINGS
+
 chown -R claude:claude /config/.claude
-bashio::log.info "Addon CLAUDE.md written to /config/.claude/CLAUDE.md"
+bashio::log.info "Addon CLAUDE.md and permissions written to /config/.claude/"
 
 bashio::log.info "Initialization complete"

@@ -1,12 +1,120 @@
 # Home Assistant Configuration
 
-You are Claude Code, running as a Home Assistant add-on with read/write access to this configuration directory.
+You are Claude Code, running as a Home Assistant add-on with read/write access to the configuration directory and the HA API.
 
 ## Environment
 
 - **Config directory:** `/config` (your working directory)
-- **HA CLI:** `ha` command available (`ha help` for full reference)
 - **Git:** This directory is version-controlled — use it
+- **API auth:** `$SUPERVISOR_TOKEN` is set automatically
+- **Tools available:** `hass` (HA API wrapper), `ha` (HA CLI), `curl`, `jq`, `python3`, `git`
+
+## hass — HA API Wrapper (Primary Tool)
+
+The `hass` command wraps the Home Assistant REST API. Use it for all HA interactions.
+
+### Entity States
+
+```bash
+# List all entities (entity_id + state)
+hass states
+
+# Filter by domain
+hass states light
+hass states sensor
+hass states automation
+
+# Get full state of a specific entity
+hass state light.living_room
+```
+
+### Service Calls
+
+```bash
+# Turn on a light
+hass call light/turn_on '{"entity_id":"light.living_room"}'
+
+# Turn on with brightness
+hass call light/turn_on '{"entity_id":"light.living_room","brightness_pct":80}'
+
+# Target an area
+hass call light/turn_off '{"area_id":"kitchen"}'
+
+# List available service domains
+hass services
+
+# List services for a specific domain
+hass services light
+```
+
+### Config & Reload
+
+```bash
+# Check config validity
+hass check
+
+# Reload a domain (automation, script, scene, input_boolean, etc.)
+hass reload automation
+hass reload script
+hass reload scene
+
+# Restart HA core (use sparingly — prefer reload)
+hass restart
+```
+
+### Info & Logs
+
+```bash
+# HA core info (version, state)
+hass info
+
+# Error log
+hass logs
+
+# List installed addons
+hass addons
+```
+
+### Templates
+
+```bash
+# Render a Jinja2 template
+hass template '{{ states("sensor.temperature") }}'
+hass template '{{ state_attr("light.living_room", "brightness") }}'
+```
+
+### Raw API Access
+
+```bash
+# GET any API endpoint
+hass get config
+
+# POST to any API endpoint
+hass post services/homeassistant/reload_core_config
+```
+
+Run `hass help` for full usage.
+
+## ha — Home Assistant CLI
+
+The `ha` CLI communicates with the Supervisor for system-level operations.
+
+```bash
+# Core operations
+ha core check        # Validate config
+ha core restart      # Restart HA core
+ha core stats        # Resource usage
+
+# Addon management
+ha addons            # List addons
+ha addons info self  # This addon's info
+ha addons restart <slug>
+
+# System info
+ha host info         # Host details
+ha network info      # Network details
+ha hardware info     # Hardware info
+```
 
 ## Workflow
 
@@ -18,19 +126,13 @@ You are Claude Code, running as a Home Assistant add-on with read/write access t
 
 ### After Making Changes
 
-1. **Validate:** `ha core check` — ALWAYS do this before reloading
+1. **Validate:** `hass check`
 2. **Commit:** `git add -A && git commit -m "description of change"`
-3. **Reload** the relevant domain (prefer reload over full restart):
-   - `ha service call automation.reload`
-   - `ha service call script.reload`
-   - `ha service call scene.reload`
-   - `ha service call input_boolean.reload` (and other `input_*` helpers)
-   - `ha service call homeassistant.reload_core_config` (core config)
-   - `ha core restart` — **only when necessary** (integration changes, packages)
+3. **Reload** the relevant domain: `hass reload automation` (prefer reload over restart)
 
 ### If Something Breaks
 
-1. `ha core check` — see if config is valid
+1. `hass check` — validate config
 2. `git diff` — see what changed
 3. `git checkout -- <file>` — revert specific files
 4. `git reset --hard HEAD~1` — undo last commit entirely
@@ -58,80 +160,10 @@ You are Claude Code, running as a Home Assistant add-on with read/write access t
 1. **NEVER** read or modify `secrets.yaml` — it contains credentials
 2. **NEVER** modify `.storage/` or `home-assistant_v2.db`
 3. Use `!secret secret_name` to reference secrets — never hardcode values
-4. Always validate with `ha core check` before reloading or restarting
+4. Always validate config before reloading or restarting
 5. Always commit changes with descriptive messages
 6. Prefer `packages/` for new self-contained functionality
 7. YAML indentation matters — use 2 spaces, no tabs
-
-## Home Assistant API
-
-You have full access to the HA REST API and Supervisor API via environment variables:
-
-- `SUPERVISOR_TOKEN` — auth token (injected by Supervisor)
-- `HASS_TOKEN` — same token, aliased for hass-cli compatibility
-- `HASS_SERVER` — `http://supervisor/core`
-
-### REST API (via Supervisor proxy)
-
-```bash
-# Get all states
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/states | jq
-
-# Get a specific entity
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/states/light.living_room | jq
-
-# Call a service
-curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"entity_id": "light.living_room"}' \
-  http://supervisor/core/api/services/light/turn_on
-
-# List all services
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/services | jq
-
-# Fire an event
-curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"key": "value"}' \
-  http://supervisor/core/api/events/my_event
-
-# Render a template
-curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"template": "{{ states(\"sensor.temperature\") }}"}' \
-  http://supervisor/core/api/template
-```
-
-### Supervisor API
-
-```bash
-# Addon management
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/addons | jq
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/info | jq
-curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/host/info | jq
-```
-
-## HA CLI Quick Reference
-
-```bash
-# Configuration
-ha core check                    # Validate config
-ha core restart                  # Restart HA core
-ha core stats                    # Resource usage
-
-# Services
-ha service call <domain.service> --arguments '{"entity_id":"light.living_room"}'
-
-# System
-ha host info                     # Host information
-ha supervisor info               # Supervisor info
-ha addons                        # List installed addons
-ha hardware info                 # Hardware details
-
-# Logs
-ha core logs                     # HA core logs
-ha supervisor logs               # Supervisor logs
-```
 
 ## YAML Tips
 

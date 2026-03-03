@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     dtach \
     jq \
+    python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for running Claude
@@ -21,6 +22,12 @@ ARG TTYD_VERSION=1.7.7
 RUN ARCH="$(uname -m)" \
     && wget -q "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${ARCH}" -O /usr/local/bin/ttyd \
     && chmod +x /usr/local/bin/ttyd
+
+# Install Home Assistant CLI
+ARG BUILD_ARCH
+ARG HA_CLI_VERSION=4.46.0
+RUN wget -q "https://github.com/home-assistant/cli/releases/download/${HA_CLI_VERSION}/ha_${BUILD_ARCH}" -O /usr/local/bin/ha \
+    && chmod +x /usr/local/bin/ha
 
 # Install Claude Code CLI as the claude user (native standalone binary)
 USER claude
@@ -34,10 +41,9 @@ ENV CLAUDE_CONFIG_DIR="/home/claude/.claude"
 COPY rootfs /
 
 # Make scripts executable
-RUN chmod +x /opt/claude-code/*.sh
+RUN chmod +x /opt/claude-code/*.sh /opt/claude-code/hass
 
 # Labels
-ARG BUILD_ARCH
 ARG BUILD_DATE
 ARG BUILD_REF
 ARG BUILD_VERSION

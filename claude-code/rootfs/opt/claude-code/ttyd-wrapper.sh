@@ -7,7 +7,7 @@
 SOCKET="/tmp/claude-session.sock"
 
 export HOME="/home/claude"
-export PATH="/home/claude/.local/bin:${PATH}"
+export PATH="/home/claude/.local/bin:/opt/claude-code:${PATH}"
 export CLAUDE_CONFIG_DIR="/home/claude/.claude"
 export TERM="xterm-256color"
 export COLORTERM="truecolor"

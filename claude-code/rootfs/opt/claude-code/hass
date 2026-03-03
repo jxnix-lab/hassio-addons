@@ -1,0 +1,143 @@
+#!/bin/bash
+# ==============================================================================
+# hass — Home Assistant API wrapper for Claude Code addon
+# Usage: hass <command> [args...]
+# ==============================================================================
+
+set -euo pipefail
+
+API="http://supervisor/core/api"
+SUP="http://supervisor"
+AUTH="Authorization: Bearer ${SUPERVISOR_TOKEN:-}"
+
+if [ -z "${SUPERVISOR_TOKEN:-}" ]; then
+    echo "Error: SUPERVISOR_TOKEN not set" >&2
+    exit 1
+fi
+
+cmd="${1:-help}"
+shift 2>/dev/null || true
+
+case "$cmd" in
+    # --- Entity states ---
+    states)
+        # hass states [domain]
+        if [ -n "${1:-}" ]; then
+            curl -sf -H "$AUTH" "$API/states" | jq "[.[] | select(.entity_id | startswith(\"${1}.\"))] | sort_by(.entity_id)"
+        else
+            curl -sf -H "$AUTH" "$API/states" | jq '[.[] | {entity_id, state}] | sort_by(.entity_id)'
+        fi
+        ;;
+    state)
+        # hass state <entity_id>
+        curl -sf -H "$AUTH" "$API/states/${1:?entity_id required}" | jq
+        ;;
+
+    # --- Services ---
+    call)
+        # hass call <domain/service> [json_data]
+        service="${1:?service required (e.g. light/turn_on)}"
+        data="${2:-{\}}"
+        curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$data" "$API/services/$service" | jq
+        ;;
+    services)
+        # hass services [domain]
+        if [ -n "${1:-}" ]; then
+            curl -sf -H "$AUTH" "$API/services" | jq ".[] | select(.domain==\"${1}\") | .services | keys[]" -r
+        else
+            curl -sf -H "$AUTH" "$API/services" | jq '.[].domain' -r | sort
+        fi
+        ;;
+
+    # --- Config ---
+    check)
+        # hass check
+        curl -sf -X POST -H "$AUTH" "$API/config/core/check" | jq
+        ;;
+    reload)
+        # hass reload <domain>  (e.g. automation, script, scene)
+        domain="${1:?domain required}"
+        curl -sf -X POST -H "$AUTH" "$API/services/${domain}/reload" | jq
+        ;;
+    restart)
+        # hass restart
+        curl -sf -X POST -H "$AUTH" "$API/services/homeassistant/restart" | jq
+        ;;
+
+    # --- Logs & Info ---
+    logs)
+        # hass logs [lines]
+        curl -sf -H "$AUTH" "$API/error_log"
+        ;;
+    info)
+        # hass info
+        curl -sf -H "$AUTH" "$SUP/core/info" | jq '.data'
+        ;;
+    addons)
+        # hass addons
+        curl -sf -H "$AUTH" "$SUP/addons" | jq '.data.addons[] | {slug, name, state, version}'
+        ;;
+
+    # --- Templates ---
+    template)
+        # hass template '<template_string>'
+        tmpl="${1:?template required}"
+        curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "{\"template\": \"$tmpl\"}" "$API/template"
+        echo
+        ;;
+
+    # --- Raw API ---
+    get)
+        # hass get <path>
+        curl -sf -H "$AUTH" "$API/${1:?path required}" | jq
+        ;;
+    post)
+        # hass post <path> [json_data]
+        path="${1:?path required}"
+        data="${2:-{\}}"
+        curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$data" "$API/$path" | jq
+        ;;
+
+    help|*)
+        cat <<'USAGE'
+hass — Home Assistant API wrapper
+
+Entity states:
+  hass states [domain]         List entities (optionally filter by domain)
+  hass state <entity_id>       Get full state of an entity
+
+Services:
+  hass call <domain/service> [json]   Call a service
+  hass services [domain]              List available services
+
+Config:
+  hass check                   Validate configuration
+  hass reload <domain>         Reload a domain (automation, script, scene, etc.)
+  hass restart                 Restart Home Assistant core
+
+Info:
+  hass logs                    Show error log
+  hass info                    Show HA core info
+  hass addons                  List installed addons
+
+Templates:
+  hass template '<template>'   Render a Jinja2 template
+
+Raw API:
+  hass get <path>              GET /api/<path>
+  hass post <path> [json]      POST /api/<path>
+
+Examples:
+  hass states light
+  hass state light.kitchen
+  hass call light/turn_on '{"entity_id":"light.kitchen","brightness_pct":80}'
+  hass call light/turn_off '{"area_id":"kitchen"}'
+  hass check
+  hass reload automation
+  hass template '{{ states("sensor.temperature") }}'
+USAGE
+        ;;
+esac
