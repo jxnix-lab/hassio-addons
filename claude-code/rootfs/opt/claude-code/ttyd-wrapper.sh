@@ -9,6 +9,8 @@ SOCKET="/tmp/claude-session.sock"
 export HOME="/home/claude"
 export PATH="/home/claude/.local/bin:${PATH}"
 export CLAUDE_CONFIG_DIR="/home/claude/.claude"
+export TERM="${TERM:-xterm-256color}"
+export LANG="${LANG:-C.UTF-8}"
 
 # Wait for the dtach socket to be created by claude-session service
 while [ ! -S "$SOCKET" ]; do
