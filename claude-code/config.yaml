@@ -12,6 +12,7 @@ panel_icon: mdi:robot
 panel_title: Claude Code
 map:
   - config:rw
+init: false
 startup: application
 hassio_api: true
 homeassistant_api: true
