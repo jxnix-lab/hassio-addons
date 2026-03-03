@@ -1,6 +1,6 @@
 name: Claude Code
 description: AI-powered terminal assistant with full access to your Home Assistant configuration
-version: 0.1.0
+version: 0.1.1
 slug: claude_code
 url: https://github.com/jxnix-lab/homelab
 arch:
