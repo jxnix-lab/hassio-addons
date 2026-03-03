@@ -14,6 +14,11 @@ export TERM="xterm-256color"
 export COLORTERM="truecolor"
 export LANG="C.UTF-8"
 
+# Expose HA API to Claude and CLI tools
+# SUPERVISOR_TOKEN is injected by the HA Supervisor (via with-contenv)
+export HASS_TOKEN="${SUPERVISOR_TOKEN}"
+export HASS_SERVER="http://supervisor/core"
+
 cd /config
 
 # Check if Claude is authenticated

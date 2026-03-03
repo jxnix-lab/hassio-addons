@@ -63,6 +63,54 @@ You are Claude Code, running as a Home Assistant add-on with read/write access t
 6. Prefer `packages/` for new self-contained functionality
 7. YAML indentation matters — use 2 spaces, no tabs
 
+## Home Assistant API
+
+You have full access to the HA REST API and Supervisor API via environment variables:
+
+- `SUPERVISOR_TOKEN` — auth token (injected by Supervisor)
+- `HASS_TOKEN` — same token, aliased for hass-cli compatibility
+- `HASS_SERVER` — `http://supervisor/core`
+
+### REST API (via Supervisor proxy)
+
+```bash
+# Get all states
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/states | jq
+
+# Get a specific entity
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/states/light.living_room | jq
+
+# Call a service
+curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"entity_id": "light.living_room"}' \
+  http://supervisor/core/api/services/light/turn_on
+
+# List all services
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/api/services | jq
+
+# Fire an event
+curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}' \
+  http://supervisor/core/api/events/my_event
+
+# Render a template
+curl -s -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"template": "{{ states(\"sensor.temperature\") }}"}' \
+  http://supervisor/core/api/template
+```
+
+### Supervisor API
+
+```bash
+# Addon management
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/addons | jq
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/core/info | jq
+curl -s -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/host/info | jq
+```
+
 ## HA CLI Quick Reference
 
 ```bash

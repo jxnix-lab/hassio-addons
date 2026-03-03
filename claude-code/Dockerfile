@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     ca-certificates \
     dtach \
+    jq \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for running Claude
