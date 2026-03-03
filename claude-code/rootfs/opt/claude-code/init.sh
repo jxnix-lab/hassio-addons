@@ -8,10 +8,14 @@
 CLAUDE_HOME="/home/claude"
 
 # --- Persistent Claude config ---
-# /data/ persists across addon restarts
+# /data/ persists across addon restarts; image ships with .claude/ and
+# .claude.json from the install step — remove them so the symlinks work
 mkdir -p /data/.claude
 chown claude:claude /data/.claude
+rm -rf "${CLAUDE_HOME}/.claude"
 ln -sf /data/.claude "${CLAUDE_HOME}/.claude"
+# .claude.json lives inside CLAUDE_CONFIG_DIR (/data/.claude/) so no
+# separate symlink needed — CLAUDE_CONFIG_DIR handles it
 
 # --- Ensure claude user can write to /config ---
 # Match claude user's uid/gid to /config owner so we don't change ownership
