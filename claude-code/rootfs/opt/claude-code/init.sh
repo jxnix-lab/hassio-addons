@@ -85,11 +85,10 @@ if [ ! -f "$CLAUDE_CONFIG" ]; then
     bashio::log.info "Claude config preseeded with Remote Control enabled"
 fi
 
-# --- Drop CLAUDE.md (only if it doesn't exist) ---
-if [ ! -f /config/CLAUDE.md ]; then
-    cp /opt/claude-code/CLAUDE.md.tmpl /config/CLAUDE.md
-    chown claude:claude /config/CLAUDE.md
-    bashio::log.info "CLAUDE.md added to /config"
-fi
+# --- Drop addon CLAUDE.md into .claude/ (always overwrite — addon-managed) ---
+mkdir -p /config/.claude
+cp /opt/claude-code/CLAUDE.md.tmpl /config/.claude/CLAUDE.md
+chown -R claude:claude /config/.claude
+bashio::log.info "Addon CLAUDE.md written to /config/.claude/CLAUDE.md"
 
 bashio::log.info "Initialization complete"
