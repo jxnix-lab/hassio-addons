@@ -1,0 +1,18 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Claude Code Add-on: ttyd web terminal
+# Serves a web terminal that attaches to the persistent Claude session
+# ==============================================================================
+
+CLAUDE_UID=$(id -u claude)
+CLAUDE_GID=$(id -g claude)
+
+bashio::log.info "Starting Claude Code terminal on port 7681 (uid=${CLAUDE_UID})..."
+
+exec ttyd \
+    --port 7681 \
+    --writable \
+    --reconnect 5 \
+    --uid "$CLAUDE_UID" \
+    --gid "$CLAUDE_GID" \
+    /opt/claude-code/ttyd-wrapper.sh

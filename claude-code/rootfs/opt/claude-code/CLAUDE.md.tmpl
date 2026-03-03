@@ -1,0 +1,94 @@
+# Home Assistant Configuration
+
+You are Claude Code, running as a Home Assistant add-on with read/write access to this configuration directory.
+
+## Environment
+
+- **Config directory:** `/config` (your working directory)
+- **HA CLI:** `ha` command available (`ha help` for full reference)
+- **Git:** This directory is version-controlled — use it
+
+## Workflow
+
+### Before Making Changes
+
+1. Check current state: `git status` and `git log --oneline -5`
+2. Commit any uncommitted work: `git add -A && git commit -m "checkpoint"`
+3. Read the file(s) you plan to modify
+
+### After Making Changes
+
+1. **Validate:** `ha core check` — ALWAYS do this before reloading
+2. **Commit:** `git add -A && git commit -m "description of change"`
+3. **Reload** the relevant domain (prefer reload over full restart):
+   - `ha service call automation.reload`
+   - `ha service call script.reload`
+   - `ha service call scene.reload`
+   - `ha service call input_boolean.reload` (and other `input_*` helpers)
+   - `ha service call homeassistant.reload_core_config` (core config)
+   - `ha core restart` — **only when necessary** (integration changes, packages)
+
+### If Something Breaks
+
+1. `ha core check` — see if config is valid
+2. `git diff` — see what changed
+3. `git checkout -- <file>` — revert specific files
+4. `git reset --hard HEAD~1` — undo last commit entirely
+
+## File Structure
+
+```
+/config/
+├── configuration.yaml     # Main config entry point (uses !include)
+├── automations.yaml       # Automations
+├── scripts.yaml           # Scripts
+├── scenes.yaml            # Scenes
+├── secrets.yaml           # ⛔ DO NOT READ OR MODIFY
+├── customize.yaml         # Entity customizations
+├── packages/              # Modular config packages
+├── blueprints/            # Automation/script blueprints
+├── custom_components/     # HACS / custom integrations
+├── www/                   # Static files (served at /local/)
+├── .storage/              # ⛔ DO NOT MODIFY (HA internal)
+└── home-assistant_v2.db   # ⛔ DO NOT MODIFY (state database)
+```
+
+## Rules
+
+1. **NEVER** read or modify `secrets.yaml` — it contains credentials
+2. **NEVER** modify `.storage/` or `home-assistant_v2.db`
+3. Use `!secret secret_name` to reference secrets — never hardcode values
+4. Always validate with `ha core check` before reloading or restarting
+5. Always commit changes with descriptive messages
+6. Prefer `packages/` for new self-contained functionality
+7. YAML indentation matters — use 2 spaces, no tabs
+
+## HA CLI Quick Reference
+
+```bash
+# Configuration
+ha core check                    # Validate config
+ha core restart                  # Restart HA core
+ha core stats                    # Resource usage
+
+# Services
+ha service call <domain.service> --arguments '{"entity_id":"light.living_room"}'
+
+# System
+ha host info                     # Host information
+ha supervisor info               # Supervisor info
+ha addons                        # List installed addons
+ha hardware info                 # Hardware details
+
+# Logs
+ha core logs                     # HA core logs
+ha supervisor logs               # Supervisor logs
+```
+
+## YAML Tips
+
+- `!include filename.yaml` — include a single file
+- `!include_dir_list dir/` — include directory as a list
+- `!include_dir_named dir/` — include directory as named mapping
+- `!include_dir_merge_list dir/` — merge directory files into one list
+- `!secret key` — reference a value from secrets.yaml

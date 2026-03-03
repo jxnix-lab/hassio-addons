@@ -1,0 +1,18 @@
+#!/bin/bash
+# ==============================================================================
+# Claude Code Add-on: ttyd wrapper
+# Attaches to the persistent Claude session via dtach
+# ==============================================================================
+
+SOCKET="/tmp/claude-session.sock"
+
+export HOME="/home/claude"
+export PATH="/home/claude/.local/bin:${PATH}"
+export CLAUDE_CONFIG_DIR="/home/claude/.claude"
+
+# Wait for the dtach socket to be created by claude-session service
+while [ ! -S "$SOCKET" ]; do
+    sleep 0.5
+done
+
+exec dtach -a "$SOCKET" -r winch

@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Claude Code Add-on: Persistent Claude session
+# Runs Claude Code inside dtach for session persistence across browser reconnects
+# Auto-restarts Claude on exit (/exit, crash, network timeout)
+# ==============================================================================
+
+CLAUDE_UID=$(id -u claude)
+CLAUDE_GID=$(id -g claude)
+
+bashio::log.info "Starting persistent Claude session (uid=${CLAUDE_UID})..."
+
+exec s6-setuidgid claude /opt/claude-code/claude-session.sh

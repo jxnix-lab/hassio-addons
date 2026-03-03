@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Claude Code Add-on: Session cleanup
+# ==============================================================================
+
+bashio::log.info "Claude session stopped (exit code: ${1})"
