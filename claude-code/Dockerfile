@@ -24,9 +24,10 @@ RUN ARCH="$(uname -m)" \
     && chmod +x /usr/local/bin/ttyd
 
 # Install Home Assistant CLI
-ARG BUILD_ARCH
 ARG HA_CLI_VERSION=4.46.0
-RUN wget -q "https://github.com/home-assistant/cli/releases/download/${HA_CLI_VERSION}/ha_${BUILD_ARCH}" -O /usr/local/bin/ha \
+RUN ARCH="$(uname -m)" \
+    && case "$ARCH" in x86_64) ARCH=amd64;; aarch64) ;; *) echo "Unsupported arch: $ARCH" >&2; exit 1;; esac \
+    && wget -q "https://github.com/home-assistant/cli/releases/download/${HA_CLI_VERSION}/ha_${ARCH}" -O /usr/local/bin/ha \
     && chmod +x /usr/local/bin/ha
 
 # Install Claude Code CLI as the claude user (native standalone binary)
@@ -50,6 +51,5 @@ ARG BUILD_VERSION
 LABEL \
     io.hass.name="Claude Code" \
     io.hass.description="AI-powered terminal assistant for Home Assistant" \
-    io.hass.arch="${BUILD_ARCH}" \
     io.hass.type="addon" \
     io.hass.version=${BUILD_VERSION}
